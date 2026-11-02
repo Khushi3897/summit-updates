@@ -16,12 +16,20 @@ export interface StoreManager extends Person {
 export type Manager = OperationsManager | StoreManager;
 export type User = Employee | Manager;
 
+export interface QuickCheck {
+  question: string;
+  options: [string, string];
+  correctOptionIndex: 0 | 1;
+  explanation: string;
+}
+
 export interface Announcement {
   id: string;
   title: string;
   body: string;
   category: Category;
   requiresAck: boolean;
+  quickCheck?: QuickCheck;
   audienceStoreIds: string[];
   recipientIds: string[];
   authorId: string;
@@ -43,6 +51,7 @@ export interface AnnouncementInput {
   body: string;
   category: Category;
   requiresAck: boolean;
+  quickCheck?: QuickCheck;
   audienceStoreIds: string[];
 }
 export type ValidationErrors = Partial<Record<keyof AnnouncementInput | 'author', string>>;

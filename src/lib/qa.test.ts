@@ -40,7 +40,7 @@ describe('QA 2: every employee against every seeded announcement', () => {
     const feed = getEmployeeFeed(employee, state.announcements, state.acknowledgments);
     const visible = [...feed.needsConfirmation, ...feed.recent];
     expect(state.announcements).toHaveLength(8);
-    expect(EMPLOYEES).toHaveLength(35);
+    expect(EMPLOYEES).toHaveLength(20);
     for (const announcement of state.announcements) {
       // The oracle uses audience stores, independently of the saved recipient IDs.
       const expected = announcement.audienceStoreIds.includes(employee.storeId);

@@ -29,7 +29,7 @@ describe('store', () => {
     const result = store.publish({ ...input, category: 'safety', requiresAck: true });
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
     const id = result.announcement.id;
-    expect(result.announcement.recipientIds).toHaveLength(8);
+    expect(result.announcement.recipientIds).toHaveLength(4);
     const alex = EMPLOYEES.find(user => user.id === 'alex-rivera')!;
     const maya = EMPLOYEES.find(user => user.id === 'maya-chen')!;
     const rachel = MANAGERS.find(user => user.id === 'rachel-kim')!;
@@ -42,7 +42,7 @@ describe('store', () => {
     const mayaFeed = getEmployeeFeed(maya, state.announcements, state.acknowledgments);
     expect([...mayaFeed.needsConfirmation, ...mayaFeed.recent].some(item => item.id === id)).toBe(false);
     expect(getManagerUpdate(rachel, id, state.announcements, state.acknowledgments)?.summary)
-      .toMatchObject({ acknowledgedCount: 1, pendingCount: 7, total: 8 });
+      .toMatchObject({ acknowledgedCount: 1, pendingCount: 3, total: 4 });
     expect(createStore({ storage, now: () => now }).getState()).toEqual(state);
   });
 
@@ -60,7 +60,7 @@ describe('store', () => {
     const storage = memoryStorage();
     const store = createStore({ storage, now: () => currentTime });
     store.switchUser('alex-rivera');
-    expect(store.confirm('closing-safety').ok).toBe(true);
+    expect(store.confirm('closing-safety', 1).ok).toBe(true);
     store.switchUser('michael-torres');
     expect(store.publish(input).ok).toBe(true);
     currentTime = new Date(now.getTime() + 86_400_000);
@@ -87,7 +87,7 @@ describe('store', () => {
     const store = createStore({ storage, now: () => now });
     expect(store.getState()).toBe(store.getState());
     store.switchUser('alex-rivera');
-    expect(store.confirm('closing-safety').ok).toBe(true);
+    expect(store.confirm('closing-safety', 1).ok).toBe(true);
     store.switchUser('michael-torres');
     expect(store.publish(input).ok).toBe(true);
     const saved = JSON.parse(storage.getItem(STORAGE_KEY)!);
@@ -101,16 +101,16 @@ describe('store', () => {
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
     expect(store.switchUser('unknown')).toBe(false);
-    expect(store.confirm('closing-safety').ok).toBe(false);
+    expect(store.confirm('closing-safety', 1).ok).toBe(false);
     expect(store.publish({ ...input, audienceStoreIds: ['tacoma'] }).ok).toBe(false);
     expect(listener).not.toHaveBeenCalled();
     store.switchUser('alex-rivera');
     expect(listener).toHaveBeenCalledTimes(1);
     expect(store.publish(input).ok).toBe(false);
-    expect(store.confirm('closing-safety').ok).toBe(true);
+    expect(store.confirm('closing-safety', 1).ok).toBe(true);
     expect(listener).toHaveBeenCalledTimes(2);
     const snapshot = store.getState();
-    expect(store.confirm('closing-safety').ok).toBe(true);
+    expect(store.confirm('closing-safety', 1).ok).toBe(true);
     store.switchUser('alex-rivera');
     expect(store.getState()).toBe(snapshot);
     expect(listener).toHaveBeenCalledTimes(2);
@@ -127,7 +127,7 @@ describe('store', () => {
     const store = createStore({ storage, now: () => now });
     expect(store.getState()).toEqual(buildSeed(now));
     store.switchUser('alex-rivera');
-    expect(store.confirm('closing-safety').ok).toBe(true);
+    expect(store.confirm('closing-safety', 1).ok).toBe(true);
     expect(store.getState().acknowledgments).toHaveLength(buildSeed(now).acknowledgments.length + 1);
   });
 });

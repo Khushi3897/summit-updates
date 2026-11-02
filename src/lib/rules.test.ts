@@ -28,12 +28,12 @@ describe('rules', () => {
     expect(getManagerUpdate(michael, 'missing', state.announcements, state.acknowledgments)).toBeNull();
     const rachelPolicy = getManagerUpdate(rachel, 'return-policy', state.announcements, state.acknowledgments)!;
     expect(rachelPolicy).toMatchObject({ groupByStore: false,
-      summary: { acknowledgedCount: 6, pendingCount: 2, total: 8 } });
+      summary: { acknowledgedCount: 3, pendingCount: 1, total: 4 } });
     const michaelPolicy = getManagerUpdate(michael, 'return-policy', state.announcements, state.acknowledgments)!;
     expect(michaelPolicy).toMatchObject({ groupByStore: true,
-      summary: { acknowledgedCount: 24, pendingCount: 11, total: 35 } });
+      summary: { acknowledgedCount: 15, pendingCount: 5, total: 20 } });
     expect(michaelPolicy.summary.byStore.map(store => [store.acknowledged.length, store.pending.length]))
-      .toEqual([[6, 2], [5, 2], [4, 3], [4, 2], [5, 2]]);
+      .toEqual([[3, 1], [3, 1], [3, 1], [3, 1], [3, 1]]);
     expect(getManagerUpdate(michael, 'closing-safety', state.announcements, state.acknowledgments)?.groupByStore).toBe(false);
     expect(state).toEqual(before);
   });
@@ -69,7 +69,7 @@ describe('rules', () => {
     expect(getConfirmationStatus(routine, alex.id, state.acknowledgments)).toEqual({ kind: 'routine' });
     const policy = getEmployeeUpdate(alex, 'return-policy', state.announcements, state.acknowledgments)!;
     expect(policy.confirmation.kind).toBe('confirmed');
-    const result = acknowledge(state, 'closing-safety', alex.id, now);
+    const result = acknowledge(state, 'closing-safety', alex.id, now, 1);
     if (!result.ok) throw new Error(result.error);
     const detail = getEmployeeUpdate(alex, 'closing-safety', result.state.announcements, result.state.acknowledgments)!;
     expect(detail.confirmation).toEqual({ kind: 'confirmed', ackedAt: now.toISOString() });
@@ -112,7 +112,7 @@ describe('rules', () => {
 
   it('acknowledging twice leaves exactly ONE record', () => {
     const state = buildSeed(now);
-    const first = acknowledge(state, 'closing-safety', alex.id, now);
+    const first = acknowledge(state, 'closing-safety', alex.id, now, 1);
     expect(first.ok).toBe(true);
     if (!first.ok) throw new Error(first.error);
     const second = acknowledge(first.state, 'closing-safety', alex.id, new Date(now.getTime() + 1000));
@@ -162,7 +162,7 @@ describe('rules', () => {
     const state = buildSeed(now);
     const policy = state.announcements.find(item => item.id === 'return-policy')!;
     const summary = getAckSummary(policy, state.acknowledgments, USERS, rachel);
-    expect(summary.total).toBe(8);
+    expect(summary.total).toBe(4);
     expect([...summary.acknowledged.map(ack => ack.user), ...summary.pending]
       .every(user => user.storeId === 'bellevue')).toBe(true);
     expect(summary.byStore.map(store => store.storeId)).toEqual(['bellevue']);
@@ -204,7 +204,7 @@ describe('rules', () => {
     const result = createAnnouncement(buildSeed(now), { ...input, audienceStoreIds: STORES.map(store => store.id) }, michael, now);
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
-    expect(result.announcement.recipientIds).toHaveLength(35);
+    expect(result.announcement.recipientIds).toHaveLength(20);
     expect(result.announcement.authorId).toBe(michael.id);
     expect(result.state.announcements).toHaveLength(9);
   });

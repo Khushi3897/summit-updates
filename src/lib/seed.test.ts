@@ -10,15 +10,15 @@ const alex = EMPLOYEES.find(user => user.id === 'alex-rivera')!;
 const maya = EMPLOYEES.find(user => user.id === 'maya-chen')!;
 
 describe('seed', () => {
-  it('seed has 8 announcements, 35 employees, 5 stores', () => {
+  it('seed has 8 announcements, 20 employees, 5 stores', () => {
     const state = buildSeed(now);
     expect(state.announcements).toHaveLength(8);
-    expect(EMPLOYEES).toHaveLength(35);
+    expect(EMPLOYEES).toHaveLength(20);
     expect(STORES).toHaveLength(5);
     expect(MANAGERS).toHaveLength(2);
-    expect(new Set(USERS.map(user => user.id)).size).toBe(37);
+    expect(new Set(USERS.map(user => user.id)).size).toBe(22);
     expect(STORES.map(store => EMPLOYEES.filter(user => user.storeId === store.id).length))
-      .toEqual([8, 7, 7, 6, 7]);
+      .toEqual([4, 4, 4, 4, 4]);
     for (const announcement of state.announcements) {
       expect(announcement.recipientIds).toEqual(EMPLOYEES
         .filter(user => announcement.audienceStoreIds.includes(user.storeId)).map(user => user.id));
@@ -27,26 +27,26 @@ describe('seed', () => {
     }
   });
 
-  it('closing safety is 5 of 8; Alex has exactly 1 item needing confirmation; Maya Chen has 0', () => {
+  it('closing safety is 2 of 4; Alex has exactly 1 item needing confirmation; Maya Chen has 0', () => {
     const state = buildSeed(now);
     const closing = state.announcements.find(item => item.id === 'closing-safety')!;
     expect(getAckSummary(closing, state.acknowledgments, USERS, michael))
-      .toMatchObject({ acknowledgedCount: 5, pendingCount: 3, total: 8 });
+      .toMatchObject({ acknowledgedCount: 2, pendingCount: 2, total: 4 });
     expect(hasAcknowledged(closing.id, alex.id, state.acknowledgments)).toBe(false);
     expect(getEmployeeFeed(alex, state.announcements, state.acknowledgments).needsConfirmation)
       .toEqual([closing]);
     expect(getEmployeeFeed(maya, state.announcements, state.acknowledgments).needsConfirmation).toEqual([]);
   });
 
-  it('return policy is 24 of 35 overall and 6 of 8 in Bellevue', () => {
+  it('return policy is 15 of 20 overall and 3 of 4 in Bellevue', () => {
     const state = buildSeed(now);
     const policy = state.announcements.find(item => item.id === 'return-policy')!;
     const summary = getAckSummary(policy, state.acknowledgments, USERS, michael);
-    expect(summary).toMatchObject({ acknowledgedCount: 24, total: 35 });
+    expect(summary).toMatchObject({ acknowledgedCount: 15, total: 20 });
     expect(summary.byStore.map(store => [store.storeId, store.acknowledgedCount, store.total]))
-      .toEqual([['bellevue', 6, 8], ['downtown', 5, 7], ['redmond', 4, 7], ['kirkland', 4, 6], ['tacoma', 5, 7]]);
+      .toEqual([['bellevue', 3, 4], ['downtown', 3, 4], ['redmond', 3, 4], ['kirkland', 3, 4], ['tacoma', 3, 4]]);
     expect(getAckSummary(policy, state.acknowledgments, USERS, rachel))
-      .toMatchObject({ acknowledgedCount: 6, total: 8 });
+      .toMatchObject({ acknowledgedCount: 3, total: 4 });
     expect(hasAcknowledged(policy.id, alex.id, state.acknowledgments)).toBe(true);
     expect(hasAcknowledged(policy.id, maya.id, state.acknowledgments)).toBe(true);
   });
@@ -82,10 +82,10 @@ describe('seed', () => {
       .toBe(state.acknowledgments.length);
     const ladder = state.announcements.find(item => item.id === 'ladder-safety')!;
     expect(getAckSummary(ladder, state.acknowledgments, USERS, michael))
-      .toMatchObject({ total: 13, acknowledgedCount: 9 });
+      .toMatchObject({ total: 8, acknowledgedCount: 6 });
     const discount = state.announcements.find(item => item.id === 'employee-discount')!;
     const summary = getAckSummary(discount, state.acknowledgments, USERS, michael);
-    expect(summary).toMatchObject({ total: 35, acknowledgedCount: 33 });
+    expect(summary).toMatchObject({ total: 20, acknowledgedCount: 18 });
     expect(new Set(summary.pending.map(user => user.storeId)).size).toBe(2);
     expect(summary.pending.map(user => user.id)).not.toContain(alex.id);
     expect(summary.pending.map(user => user.id)).not.toContain(maya.id);

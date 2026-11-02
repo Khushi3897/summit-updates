@@ -65,9 +65,11 @@ main { padding-top: 24px; padding-bottom: 32px; }
 .confirmation-inner { max-width: 680px; margin: 0 auto; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
 .confirm-button { width: 100%; min-height: 48px; padding: 12px 16px; border: 0; border-radius: 8px; background: #1655b0; color: #fff; font-weight: 650; }
 .confirm-button:hover { background: #11458f; }
-.confirm-button:disabled { cursor: wait; background: #536a8a; }
+.confirm-button:disabled { cursor: default; background: #536a8a; }
+.confirm-button[aria-busy="true"] { cursor: wait; }
 .confirmed-message { padding: 12px; border-radius: 8px; background: #e3f3e9; color: #216142; font-size: 0.9375rem; font-weight: 600; text-align: center; }
 .save-error { margin-bottom: 8px; color: #182536; }
+.confirm-help { margin-bottom: 8px; }
 
 .manager-tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid #7a8799; }
 .manager-tabs a { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px 16px; text-decoration: none; font-weight: 650; border-bottom: 3px solid transparent; }
@@ -97,7 +99,7 @@ main { padding-top: 24px; padding-bottom: 32px; }
 .field-heading { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .field-heading label, legend { font-weight: 650; }
 .field-heading span, .field-help { color: #526174; font-size: 0.875rem; }
-.form-field > input, .form-field > textarea { display: block; width: 100%; min-width: 0; padding: 12px; border: 1px solid #7a8799; border-radius: 8px; background: #fff; color: #182536; }
+.form-field > input, .form-field > textarea, .form-field > select { display: block; width: 100%; min-width: 0; padding: 12px; border: 1px solid #7a8799; border-radius: 8px; background: #fff; color: #182536; }
 .form-field > input { min-height: 48px; }
 .form-field > textarea { resize: vertical; }
 .form-field > [aria-invalid="true"] { border-color: #a52720; }
@@ -111,6 +113,19 @@ main { padding-top: 24px; padding-bottom: 32px; }
 .all-stores { margin: 2px 0 8px; }
 .ack-field .field-help { margin-top: 4px; }
 .publish-actions .field-help { margin-bottom: 12px; }
+.quick-check { display: grid; gap: 12px; margin-top: 28px; padding: 20px; border: 1px solid #7a8799; border-radius: 12px; background: #fff; }
+.quick-check fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.quick-check legend { margin-bottom: 12px; font-weight: 650; overflow-wrap: anywhere; }
+.answer-choice { padding: 8px 12px; border: 1px solid #7a8799; border-radius: 8px; }
+.answer-choice + .answer-choice { margin-top: 8px; }
+.check-answer-button { min-height: 44px; padding: 10px 14px; border: 1px solid #1655b0; border-radius: 8px; background: #fff; color: #1655b0; font-weight: 650; }
+.check-answer-button:disabled { border-color: #7a8799; color: #526174; cursor: default; }
+.check-feedback { padding: 12px; border-radius: 8px; background: #fff0cb; color: #794800; }
+.check-feedback-correct { background: #e3f3e9; color: #216142; }
+.quick-check-editor > .field-help { margin-top: 4px; }
+.post-form .quick-check-fields { display: grid; gap: 16px; margin-top: 16px; padding: 16px; border: 1px solid #7a8799; border-radius: 12px; background: #fff; }
+.quick-check-fields .form-field > label { display: block; margin-bottom: 8px; font-weight: 600; }
+.quick-check-fields .form-field > .field-help { margin-top: 4px; }
 
 @media (min-width: 600px) {
   .header-inner { padding-top: 20px; padding-bottom: 20px; }

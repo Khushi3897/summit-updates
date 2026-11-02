@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { USERS } from '../lib/constants';
 import { CATEGORY_LABELS, dateAndTime } from '../lib/presentation';
-import { getEmployeeUpdate } from '../lib/rules';
+import { evaluateQuickCheck, getEmployeeUpdate } from '../lib/rules';
 import { confirm } from '../lib/store';
 import type { AppState, Employee } from '../lib/types';
 
@@ -9,6 +9,8 @@ export function UpdateDetail({ id, user, state }: { id: string; user: Employee; 
   const update = getEmployeeUpdate(user, id, state.announcements, state.acknowledgments);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [selectedAnswer, setSelectedAnswer] = useState<number>();
+  const [checkedAnswer, setCheckedAnswer] = useState<number>();
   const savingRef = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(saveTimer.current), []);
@@ -23,6 +25,7 @@ export function UpdateDetail({ id, user, state }: { id: string; user: Employee; 
   }
   const { announcement, confirmation } = update;
   const author = USERS.find(person => person.id === announcement.authorId);
+  const checkFeedback = evaluateQuickCheck(announcement.quickCheck, checkedAnswer);
 
   function handleConfirm() {
     if (savingRef.current) return;
@@ -30,7 +33,7 @@ export function UpdateDetail({ id, user, state }: { id: string; user: Employee; 
     setSaving(true);
     setError('');
     // Persist the explicit action now so navigating away cannot cancel it.
-    const result = confirm(id);
+    const result = confirm(id, checkedAnswer);
     if (!result.ok) setError(result.error);
     // The timer controls only the brief disabled saving indicator.
     saveTimer.current = setTimeout(() => {
@@ -51,6 +54,24 @@ export function UpdateDetail({ id, user, state }: { id: string; user: Employee; 
         </p>
         <p className="full-body">{announcement.body}</p>
       </div>
+      {announcement.quickCheck && confirmation.kind === 'pending' && <section className="quick-check" aria-labelledby="quick-check-heading">
+        <h2 id="quick-check-heading">Quick check</h2>
+        <p className="field-help">One key detail before you confirm.</p>
+        <fieldset aria-describedby="answer-help">
+          <legend>{announcement.quickCheck.question}</legend>
+          {announcement.quickCheck.options.map((option, index) => <label className="check-label answer-choice" key={index}>
+            <input type="radio" name="quick-check-answer" checked={selectedAnswer === index}
+              onChange={() => { setSelectedAnswer(index); setCheckedAnswer(undefined); }} />
+            {option}
+          </label>)}
+        </fieldset>
+        <button type="button" className="check-answer-button" disabled={selectedAnswer === undefined}
+          onClick={() => setCheckedAnswer(selectedAnswer)}>Check answer</button>
+        <p className="field-help" id="answer-help">Choose an answer, then check it before confirming.</p>
+        {checkFeedback.message && <p className={`check-feedback check-feedback-${checkFeedback.kind}`} role="status">
+          {checkFeedback.message}
+        </p>}
+      </section>}
       {confirmation.kind !== 'routine' && (
         <div className="confirmation-bar">
           <div className="confirmation-inner">
@@ -60,10 +81,13 @@ export function UpdateDetail({ id, user, state }: { id: string; user: Employee; 
                 Confirmed on <time dateTime={confirmation.ackedAt}>{dateAndTime(confirmation.ackedAt)}</time>
               </p>
             ) : (
-              <button className="confirm-button" type="button" disabled={saving}
-                aria-busy={saving} onClick={handleConfirm}>
-                {saving ? 'Saving…' : "Confirm I've read this"}
-              </button>
+              <>
+                {!checkFeedback.canConfirm && <p className="field-help confirm-help" id="confirm-help">Answer the quick check above to confirm.</p>}
+                <button className="confirm-button" type="button" disabled={saving || !checkFeedback.canConfirm}
+                  aria-busy={saving} aria-describedby={!checkFeedback.canConfirm ? 'confirm-help' : undefined} onClick={handleConfirm}>
+                  {saving ? 'Saving…' : "Confirm I've read this"}
+                </button>
+              </>
             )}
           </div>
         </div>

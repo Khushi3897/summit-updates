@@ -2,7 +2,7 @@ import { STORES, USERS } from './constants';
 import type {
   AckBreakdown, AcknowledgeResult, Acknowledgment, AckSummary, Announcement,
   AnnouncementInput, AppState, Category, Employee, Manager, PublishResult,
-  User, ValidationErrors, ValidationResult,
+  QuickCheck, User, ValidationErrors, ValidationResult,
 } from './types';
 
 export function getRecipients(announcement: Announcement, users: readonly User[]): Employee[] {
@@ -87,7 +87,7 @@ export function getPostingOptions(manager: Manager) {
 }
 
 export function acknowledge(
-  state: AppState, announcementId: string, userId: string, now: Date,
+  state: AppState, announcementId: string, userId: string, now: Date, answerIndex?: number,
 ): AcknowledgeResult {
   const announcement = state.announcements.find(item => item.id === announcementId);
   if (!announcement) return { ok: false, error: 'Update not found.' };
@@ -96,6 +96,9 @@ export function acknowledge(
     return { ok: false, error: 'Only a recipient can acknowledge this update.' };
   }
   if (hasAcknowledged(announcementId, userId, state.acknowledgments)) return { ok: true, state };
+  if (!evaluateQuickCheck(announcement.quickCheck, answerIndex).canConfirm) {
+    return { ok: false, error: 'Answer the quick check correctly before confirming.' };
+  }
   return {
     ok: true,
     state: {
@@ -151,6 +154,54 @@ export function defaultRequiresAck(category: Category): boolean {
   return category === 'safety' || category === 'policy';
 }
 
+export function setAcknowledgmentRequired(input: AnnouncementInput, requiresAck: boolean): AnnouncementInput {
+  if (requiresAck) return { ...input, requiresAck };
+  const { quickCheck: _quickCheck, ...rest } = input;
+  return { ...rest, requiresAck };
+}
+
+export function setAnnouncementCategory(input: AnnouncementInput, category: Category): AnnouncementInput {
+  return input.category === category ? input :
+    setAcknowledgmentRequired({ ...input, category }, defaultRequiresAck(category));
+}
+
+export function setQuickCheckEnabled(input: AnnouncementInput, enabled: boolean): AnnouncementInput {
+  if (enabled && input.requiresAck) return {
+    ...input,
+    quickCheck: input.quickCheck ?? { question: '', options: ['', ''], correctOptionIndex: 0, explanation: '' },
+  };
+  const { quickCheck: _quickCheck, ...rest } = input;
+  return rest;
+}
+
+export function evaluateQuickCheck(quickCheck: QuickCheck | undefined, answerIndex?: number) {
+  if (!quickCheck) return { kind: 'not-required', canConfirm: true, message: '' } as const;
+  if (answerIndex === undefined) return { kind: 'unanswered', canConfirm: false, message: '' } as const;
+  if (answerIndex === quickCheck.correctOptionIndex) return {
+    kind: 'correct', canConfirm: true, message: "That's right. You can now confirm you've read this.",
+  } as const;
+  return {
+    kind: 'incorrect', canConfirm: false,
+    message: `${quickCheck.explanation} Review the update and try again.`,
+  } as const;
+}
+
+export function validateQuickCheck(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null) return 'Add a valid quick check.';
+  const check = value as Record<string, unknown>;
+  if (typeof check.question !== 'string' || !check.question.trim()) return 'Add a quick-check question.';
+  if (check.question.trim().length > 160) return 'Question is too long (160 max).';
+  if (!Array.isArray(check.options) || check.options.length !== 2 ||
+      !check.options.every(option => typeof option === 'string' && option.trim())) return 'Add two answer choices.';
+  const options = check.options as string[];
+  if (options.some(option => option.trim().length > 120)) return 'Answer choice is too long (120 max).';
+  if (options[0].trim().toLowerCase() === options[1].trim().toLowerCase()) return 'Use two different answer choices.';
+  if (check.correctOptionIndex !== 0 && check.correctOptionIndex !== 1) return 'Choose the correct answer.';
+  if (typeof check.explanation !== 'string' || !check.explanation.trim()) return 'Add an explanation to help employees try again.';
+  if (check.explanation.trim().length > 300) return 'Explanation is too long (300 max).';
+  return undefined;
+}
+
 export function validateAnnouncementInput(input: AnnouncementInput, author: User): ValidationResult {
   const errors: ValidationErrors = {};
   const title = input.title.trim();
@@ -165,6 +216,11 @@ export function validateAnnouncementInput(input: AnnouncementInput, author: User
   }
   if (!['safety', 'policy', 'general'].includes(input.category)) errors.category = 'Choose a valid category.';
   if (typeof input.requiresAck !== 'boolean') errors.requiresAck = 'Choose whether acknowledgment is required.';
+  if (input.quickCheck !== undefined) {
+    const error = validateQuickCheck(input.quickCheck);
+    if (!input.requiresAck) errors.quickCheck = 'A quick check requires acknowledgment.';
+    else if (error) errors.quickCheck = error;
+  }
   if (author.role === 'employee') errors.author = 'Only managers can publish updates.';
   if (author.role === 'store-manager' &&
       (new Set(input.audienceStoreIds).size !== 1 || input.audienceStoreIds[0] !== author.storeId)) {
@@ -190,6 +246,12 @@ export function createAnnouncement(
     body: input.body.trim(),
     category: input.category,
     requiresAck: input.requiresAck,
+    ...(input.quickCheck ? { quickCheck: {
+      question: input.quickCheck.question.trim(),
+      options: input.quickCheck.options.map(option => option.trim()) as [string, string],
+      correctOptionIndex: input.quickCheck.correctOptionIndex,
+      explanation: input.quickCheck.explanation.trim(),
+    } } : {}),
     audienceStoreIds,
     recipientIds: USERS.filter((user): user is Employee =>
       user.role === 'employee' && audienceStoreIds.includes(user.storeId)).map(user => user.id),

@@ -37,6 +37,12 @@ export function ManagerTracking({ id, user, state, published }: {
         <p className="byline"><time dateTime={announcement.publishedAt}>{dateAndTime(announcement.publishedAt)}</time></p>
         <p className="full-body">{announcement.body}</p>
         <p className="sent-to"><strong>Sent to:</strong> {audienceNames(announcement.audienceStoreIds)}</p>
+        {announcement.quickCheck && <section className="quick-check" aria-labelledby="published-check-heading">
+          <h2 id="published-check-heading">Quick check</h2>
+          <p>{announcement.quickCheck.question}</p>
+          <p><strong>Correct answer:</strong> {announcement.quickCheck.options[announcement.quickCheck.correctOptionIndex]}</p>
+          <p className="field-help">{announcement.quickCheck.explanation}</p>
+        </section>}
       </div>
       {announcement.requiresAck ? (
         <>

@@ -1,14 +1,19 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { CATEGORY_LABELS } from '../lib/presentation';
-import { defaultRequiresAck, getPostingOptions } from '../lib/rules';
+import { getPostingOptions, setAcknowledgmentRequired, setAnnouncementCategory, setQuickCheckEnabled } from '../lib/rules';
 import { publish } from '../lib/store';
-import type { Announcement, Manager, ValidationErrors } from '../lib/types';
+import type { Announcement, Manager, QuickCheck, ValidationErrors } from '../lib/types';
 
 export function PostUpdate({ user, onPublished }: { user: Manager; onPublished: (announcement: Announcement) => void }) {
   const options = getPostingOptions(user);
   const [input, setInput] = useState(options.initialInput);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const form = useRef<HTMLFormElement>(null);
+  const quickCheck = input.quickCheck;
+
+  function updateQuickCheck(patch: Partial<QuickCheck>) {
+    if (quickCheck) setInput({ ...input, quickCheck: { ...quickCheck, ...patch } });
+  }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -46,9 +51,7 @@ export function PostUpdate({ user, onPublished }: { user: Manager; onPublished: 
           <div className="category-buttons">
             {(['safety', 'policy', 'general'] as const).map(category => (
               <button key={category} type="button" aria-pressed={input.category === category}
-                onClick={() => {
-                  if (input.category !== category) setInput({ ...input, category, requiresAck: defaultRequiresAck(category) });
-                }}>
+                onClick={() => setInput(setAnnouncementCategory(input, category))}>
                 {CATEGORY_LABELS[category]}
               </button>
             ))}
@@ -57,11 +60,56 @@ export function PostUpdate({ user, onPublished }: { user: Manager; onPublished: 
         <div className="ack-field">
           <label className="check-label">
             <input type="checkbox" role="switch" checked={input.requiresAck} aria-describedby="ack-help"
-              onChange={event => setInput({ ...input, requiresAck: event.target.checked })} />
+              onChange={event => setInput(setAcknowledgmentRequired(input, event.target.checked))} />
             Requires acknowledgment
           </label>
           <p id="ack-help" className="field-help">Employees will be asked to tap “Confirm I've read this”. Best for safety and policy updates.</p>
         </div>
+        {input.requiresAck && <div className="quick-check-editor">
+          <label className="check-label">
+            <input type="checkbox" role="switch" checked={!!quickCheck} aria-describedby="quick-check-help"
+              onChange={event => setInput(setQuickCheckEnabled(input, event.target.checked))} />
+            Add a quick check
+          </label>
+          <p className="field-help" id="quick-check-help">Optional: one question about a key detail, answered before confirming. Use sparingly for important updates.</p>
+          {quickCheck && <fieldset className="quick-check-fields" aria-describedby={errors.quickCheck ? 'quick-check-error' : undefined}>
+            <legend>Quick check</legend>
+            <div className="form-field">
+              <label htmlFor="check-question">Question</label>
+              <input id="check-question" value={quickCheck.question} aria-invalid={!!errors.quickCheck}
+                aria-describedby={errors.quickCheck ? 'quick-check-error' : undefined}
+                onChange={event => updateQuickCheck({ question: event.target.value })} />
+              <p className="field-help">Up to 160 characters.</p>
+            </div>
+            {quickCheck.options.map((option, index) => <div className="form-field" key={index}>
+              <label htmlFor={`check-option-${index}`}>Answer choice {index + 1}</label>
+              <input id={`check-option-${index}`} value={option} aria-invalid={!!errors.quickCheck}
+                aria-describedby={errors.quickCheck ? 'quick-check-error' : undefined}
+                onChange={event => {
+                  const options: [string, string] = [...quickCheck.options];
+                  options[index] = event.target.value;
+                  updateQuickCheck({ options });
+                }} />
+              <p className="field-help">Up to 120 characters.</p>
+            </div>)}
+            <div className="form-field">
+              <label htmlFor="check-correct">Correct answer</label>
+              <select id="check-correct" value={quickCheck.correctOptionIndex}
+                onChange={event => updateQuickCheck({ correctOptionIndex: Number(event.target.value) as 0 | 1 })}>
+                <option value={0}>Answer choice 1</option>
+                <option value={1}>Answer choice 2</option>
+              </select>
+            </div>
+            <div className="form-field">
+              <label htmlFor="check-explanation">Explanation for a retry</label>
+              <textarea id="check-explanation" rows={3} value={quickCheck.explanation} aria-invalid={!!errors.quickCheck}
+                aria-describedby={errors.quickCheck ? 'quick-check-error' : 'explanation-help'}
+                onChange={event => updateQuickCheck({ explanation: event.target.value })} />
+              <p className="field-help" id="explanation-help">Point employees back to the key detail. Up to 300 characters.</p>
+            </div>
+            {errors.quickCheck && <p className="field-error" id="quick-check-error">{errors.quickCheck}</p>}
+          </fieldset>}
+        </div>}
         <fieldset aria-describedby={errors.audienceStoreIds ? 'audience-error' : undefined}>
           <legend>Audience</legend>
           {!options.audienceLocked && <button className="all-stores" type="button"

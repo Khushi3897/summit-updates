@@ -42,16 +42,22 @@ export function buildSeed(now: Date): AppState {
       'Thank you for the care you put into our fall promotion across all five stores. Your product knowledge and attention to customers helped the teams finish the campaign strongly. We will share store highlights at the next team huddle.',
       'general', false, allStores, 'michael-torres', 35),
   ];
+  announcements[0].quickCheck = {
+    question: 'Should you complete closing alone?',
+    options: ['Yes', 'No, with another team member'],
+    correctOptionIndex: 1,
+    explanation: 'Complete closing with a second team member and leave together after the final security check.',
+  };
   const counts: Record<string, Record<string, number>> = {
-    'closing-safety': { bellevue: 5 },
-    'return-policy': { bellevue: 6, downtown: 5, redmond: 4, kirkland: 4, tacoma: 5 },
-    'ladder-safety': { redmond: 5, kirkland: 4 },
+    'closing-safety': { bellevue: 2 },
+    'return-policy': { bellevue: 3, downtown: 3, redmond: 3, kirkland: 3, tacoma: 3 },
+    'ladder-safety': { redmond: 3, kirkland: 3 },
   };
   const acknowledgments = announcements.flatMap(announcement => {
     let employeeIds: string[];
     if (announcement.id === 'employee-discount') {
       // Two pending employees in different stores; Alex and Maya have confirmed.
-      employeeIds = announcement.recipientIds.filter(id => !['grace-thompson', 'marcus-johnson'].includes(id));
+      employeeIds = announcement.recipientIds.filter(id => !['jordan-brooks', 'fatima-hassan'].includes(id));
     } else {
       employeeIds = Object.entries(counts[announcement.id] ?? {}).flatMap(([storeId, count]) =>
         EMPLOYEES.filter(user => user.storeId === storeId &&

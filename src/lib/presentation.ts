@@ -1,12 +1,9 @@
-import { EMPLOYEES, MANAGERS, STORES } from './constants';
+import { DEMO_USER_IDS, EMPLOYEES, MANAGERS, STORES } from './constants';
 import type { Category } from './types';
 
 export const VIEWER_GROUPS = [
   { label: 'Managers', users: MANAGERS },
-  ...STORES.map(store => ({
-    label: store.name,
-    users: EMPLOYEES.filter(employee => employee.storeId === store.id),
-  })),
+  { label: 'Employees', users: EMPLOYEES.filter(employee => DEMO_USER_IDS.includes(employee.id)) },
 ];
 
 export const CATEGORY_LABELS: Record<Category, string> = {

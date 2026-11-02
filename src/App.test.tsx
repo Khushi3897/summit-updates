@@ -15,7 +15,7 @@ vi.mock('./lib/store', async importOriginal => {
     subscribe: (listener: () => void) => store.subscribe(listener),
     switchUser: (id: string) => store.switchUser(id),
     publish: (...args: Parameters<typeof store.publish>) => store.publish(...args),
-    confirm: (id: string) => store.confirm(id),
+    confirm: (id: string, answerIndex?: number) => store.confirm(id, answerIndex),
     resetDemo: () => store.resetDemo(),
   };
 });
@@ -36,6 +36,10 @@ function viewer(id: string) {
 }
 function finishSaving() {
   act(() => vi.runOnlyPendingTimers());
+}
+function passClosingCheck() {
+  fireEvent.click(screen.getByRole('radio', { name: 'No, with another team member' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Check answer' }));
 }
 function publishFromForm() {
   route('#/post');
@@ -63,6 +67,90 @@ afterEach(() => {
 });
 
 describe('QA behavior', () => {
+  it('shows only the four demo identities while retaining four employees per store', () => {
+    render(<App />);
+    expect(screen.getAllByRole('option').map(option => option.textContent))
+      .toEqual(['Michael Torres', 'Rachel Kim', 'Alex Rivera', 'Maya Chen']);
+    expect(EMPLOYEES).toHaveLength(20);
+  });
+
+  it('a quick-check answer never confirms by itself, and changing a passed answer removes confirmation eligibility', () => {
+    store.switchUser('alex-rivera');
+    route('#/update/closing-safety');
+    render(<App />);
+    const before = structuredClone(store.getState());
+    const confirm = screen.getByRole('button', { name: "Confirm I've read this" });
+    expect((confirm as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(confirm);
+    fireEvent.click(screen.getByRole('radio', { name: /^Yes$/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check answer' }));
+    expect(screen.getByRole('status').textContent).toContain('Review the update and try again.');
+    expect(store.getState()).toEqual(before);
+    expect((confirm as HTMLButtonElement).disabled).toBe(true);
+    passClosingCheck();
+    expect((confirm as HTMLButtonElement).disabled).toBe(false);
+    expect(store.getState()).toEqual(before);
+    fireEvent.click(screen.getByRole('radio', { name: /^Yes$/ }));
+    expect((confirm as HTMLButtonElement).disabled).toBe(true);
+    passClosingCheck();
+    fireEvent.click(confirm);
+    finishSaving();
+    expect(screen.getByRole('status').textContent).toMatch(/^Confirmed on /);
+    expect(screen.queryByRole('button', { name: 'Check answer' })).toBeNull();
+    viewer('rachel-kim');
+    route('#/update/closing-safety');
+    expect(screen.getByText('3 of 4 acknowledged')).toBeTruthy();
+  });
+
+  it('validates a manager-written question, publishes it, and completes the employee check after reload', () => {
+    route('#/post');
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Check the exit' } });
+    fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'Keep the exit clear. Tell the manager if it is blocked.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Safety' }));
+    expect((screen.getByRole('switch', { name: 'Add a quick check' }) as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(screen.getByRole('switch', { name: 'Add a quick check' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish update' }));
+    finishSaving();
+    expect(screen.getByText('Add a quick-check question.')).toBeTruthy();
+    expect(store.getState().announcements).toHaveLength(8);
+    expect(document.activeElement).toBe(screen.getByLabelText('Question'));
+    fireEvent.change(screen.getByLabelText('Question'), { target: { value: 'What if the exit is blocked?' } });
+    fireEvent.change(screen.getByLabelText('Answer choice 1'), { target: { value: 'Tell the manager' } });
+    fireEvent.change(screen.getByLabelText('Answer choice 2'), { target: { value: 'Ignore it' } });
+    fireEvent.change(screen.getByLabelText('Explanation for a retry'), { target: { value: 'Report blocked exits to the manager.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Publish update' }));
+    const announcement = store.getState().announcements.at(-1)!;
+    route(`#/update/${announcement.id}`);
+    expect(screen.getByText('0 of 4 acknowledged')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Quick check' }).textContent).toContain('Tell the manager');
+    viewer('alex-rivera');
+    route(`#/update/${announcement.id}`);
+    cleanup();
+    reloadStore();
+    render(<App />);
+    fireEvent.click(screen.getByRole('radio', { name: 'Tell the manager' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check answer' }));
+    expect(store.getState().acknowledgments.some(ack => ack.announcementId === announcement.id)).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: "Confirm I've read this" }));
+    finishSaving();
+    viewer('rachel-kim');
+    route(`#/update/${announcement.id}`);
+    expect(screen.getByText('1 of 4 acknowledged')).toBeTruthy();
+  });
+
+  it('removes an optional draft check when acknowledgment is turned off', () => {
+    route('#/post');
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Safety' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Add a quick check' }));
+    fireEvent.change(screen.getByLabelText('Question'), { target: { value: 'Draft question' } });
+    fireEvent.click(screen.getByRole('switch', { name: 'Requires acknowledgment' }));
+    expect(screen.queryByLabelText('Question')).toBeNull();
+    fireEvent.click(screen.getByRole('switch', { name: 'Requires acknowledgment' }));
+    expect((screen.getByRole('switch', { name: 'Add a quick check' }) as HTMLInputElement).checked).toBe(false);
+  });
+
   it('1: form submission rejects whitespace and focuses the invalid field', () => {
     route('#/post');
     render(<App />);
@@ -98,6 +186,7 @@ describe('QA behavior', () => {
     route('#/update/closing-safety');
     render(<App />);
     const before = store.getState().acknowledgments.length;
+    passClosingCheck();
     const button = screen.getByRole('button', { name: "Confirm I've read this" });
     act(() => { for (let i = 0; i < 5; i++) fireEvent.click(button); });
     expect(screen.getByRole('button', { name: 'Saving…' }).hasAttribute('disabled')).toBe(true);
@@ -109,7 +198,7 @@ describe('QA behavior', () => {
     expect(screen.queryByRole('button', { name: "Confirm I've read this" })).toBeNull();
     viewer('rachel-kim');
     route('#/update/closing-safety');
-    expect(screen.getByText('6 of 8 acknowledged')).toBeTruthy();
+    expect(screen.getByText('3 of 4 acknowledged')).toBeTruthy();
   });
 
   it.each(MANAGERS)('5–6: $name sees correct rendered counts and list contents for every seeded detail', manager => {
@@ -142,10 +231,10 @@ describe('QA behavior', () => {
     }
   });
 
-  it('7, 9: Rachel publishes, Alex confirms, Rachel sees 0→1 of 8, Maya cannot access it, and all changes reload', () => {
+  it('7, 9: Rachel publishes, Alex confirms, Rachel sees 0→1 of 4, Maya cannot access it, and all changes reload', () => {
     render(<App />);
     const announcement = publishFromForm();
-    expect(screen.getByText('0 of 8 acknowledged')).toBeTruthy();
+    expect(screen.getByText('0 of 4 acknowledged')).toBeTruthy();
     viewer('alex-rivera');
     expect(screen.getByRole('link', { name: /QA closing checklist/ })).toBeTruthy();
     route(`#/update/${announcement.id}`);
@@ -153,7 +242,7 @@ describe('QA behavior', () => {
     finishSaving();
     viewer('rachel-kim');
     route(`#/update/${announcement.id}`);
-    expect(screen.getByText('1 of 8 acknowledged')).toBeTruthy();
+    expect(screen.getByText('1 of 4 acknowledged')).toBeTruthy();
     expect(screen.getByRole('region', { name: 'Acknowledged (1)' }).textContent).toContain('Alex Rivera');
     viewer('maya-chen');
     expect(screen.queryByRole('link', { name: /QA closing checklist/ })).toBeNull();
@@ -168,7 +257,7 @@ describe('QA behavior', () => {
     expect((screen.getByRole('combobox', { name: 'Viewing as' }) as HTMLSelectElement).value).toBe('maya-chen');
     viewer('rachel-kim');
     route(`#/update/${announcement.id}`);
-    expect(screen.getByText('1 of 8 acknowledged')).toBeTruthy();
+    expect(screen.getByText('1 of 4 acknowledged')).toBeTruthy();
   });
 
   it.each([null, '', ' ', '{broken', 'null', '[]', '{}',
@@ -235,7 +324,7 @@ describe('QA behavior', () => {
     fireEvent.submit(submit.closest('form')!);
     const announcement = store.getState().announcements.at(-1)!;
     expect(announcement.title).toBe('Keyboard posting');
-    expect(announcement.recipientIds).toHaveLength(8);
+    expect(announcement.recipientIds).toHaveLength(4);
     viewer('alex-rivera');
     route(`#/update/${announcement.id}`);
     const confirmButton = screen.getByRole('button', { name: "Confirm I've read this" });
@@ -256,6 +345,7 @@ describe('QA behavior', () => {
     store.switchUser('alex-rivera');
     route('#/update/closing-safety');
     render(<App />);
+    passClosingCheck();
     fireEvent.click(screen.getByRole('button', { name: "Confirm I've read this" }));
     route('#/');
     finishSaving();
@@ -269,6 +359,7 @@ describe('QA behavior', () => {
     store.switchUser('alex-rivera');
     route('#/update/closing-safety');
     render(<App />);
+    passClosingCheck();
     fireEvent.click(screen.getByRole('button', { name: "Confirm I've read this" }));
     viewer('maya-chen');
     finishSaving();
