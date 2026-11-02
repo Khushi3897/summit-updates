@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { STORAGE_KEY } from './constants';
+import { EMPLOYEES, MANAGERS, STORAGE_KEY } from './constants';
+import { getEmployeeFeed, getManagerUpdate } from './rules';
 import { buildSeed } from './seed';
 import { createStore, type StorageAdapter } from './store';
 import type { AnnouncementInput } from './types';
@@ -19,6 +20,32 @@ function memoryStorage(initial?: string): StorageAdapter {
 }
 
 describe('store', () => {
+  it('publishing as Rachel reaches Alex but not Maya, and confirmation updates tracking', () => {
+    const storage = memoryStorage();
+    const store = createStore({ storage, now: () => now });
+    const invalid = store.publish({ ...input, title: ' ', body: '' });
+    expect(invalid).toEqual({ ok: false, errors: { title: 'Add a title.', body: 'Add a message.' } });
+    expect(store.getState().announcements).toHaveLength(8);
+    const result = store.publish({ ...input, category: 'safety', requiresAck: true });
+    if (!result.ok) throw new Error(JSON.stringify(result.errors));
+    const id = result.announcement.id;
+    expect(result.announcement.recipientIds).toHaveLength(8);
+    const alex = EMPLOYEES.find(user => user.id === 'alex-rivera')!;
+    const maya = EMPLOYEES.find(user => user.id === 'maya-chen')!;
+    const rachel = MANAGERS.find(user => user.id === 'rachel-kim')!;
+    store.switchUser(alex.id);
+    let state = store.getState();
+    expect(getEmployeeFeed(alex, state.announcements, state.acknowledgments).needsConfirmation[0].id).toBe(id);
+    store.confirm(id);
+    store.switchUser(maya.id);
+    state = store.getState();
+    const mayaFeed = getEmployeeFeed(maya, state.announcements, state.acknowledgments);
+    expect([...mayaFeed.needsConfirmation, ...mayaFeed.recent].some(item => item.id === id)).toBe(false);
+    expect(getManagerUpdate(rachel, id, state.announcements, state.acknowledgments)?.summary)
+      .toMatchObject({ acknowledgedCount: 1, pendingCount: 7, total: 8 });
+    expect(createStore({ storage, now: () => now }).getState()).toEqual(state);
+  });
+
   it('corrupted localStorage JSON falls back to seed; wrong version falls back to seed', () => {
     for (const raw of ['{broken json', JSON.stringify({ ...buildSeed(now), version: 2 })]) {
       const storage = memoryStorage(raw);

@@ -23,7 +23,10 @@ export function Header({ currentUserId }: { currentUserId: string }) {
         </div>
         <div className="viewer-field">
           <label htmlFor="viewer">Viewing as</label>
-          <select id="viewer" value={currentUserId} onChange={event => switchUser(event.target.value)}>
+          <select id="viewer" value={currentUserId} onChange={event => {
+            switchUser(event.target.value);
+            window.location.hash = '/';
+          }}>
             {VIEWER_GROUPS.map(group => (
               <optgroup key={group.label} label={group.label}>
                 {group.users.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}

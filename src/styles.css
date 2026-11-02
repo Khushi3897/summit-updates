@@ -11,7 +11,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; }
-button, select { font: inherit; }
+button, select, input, textarea { font: inherit; }
 button, select, summary, a { -webkit-tap-highlight-color: transparent; }
 button, select, summary { min-height: 44px; }
 button, summary { cursor: pointer; }
@@ -67,6 +67,49 @@ main { padding-top: 24px; padding-bottom: 32px; }
 .confirm-button:disabled { cursor: wait; background: #536a8a; }
 .confirmed-message { padding: 12px; border-radius: 8px; background: #e3f3e9; color: #216142; font-size: 0.9375rem; font-weight: 600; text-align: center; }
 .save-error { margin-bottom: 8px; color: #182536; }
+
+.manager-tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid #c5cfdd; }
+.manager-tabs a { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px 16px; text-decoration: none; font-weight: 650; border-bottom: 3px solid transparent; }
+.manager-tabs a[aria-current] { border-bottom-color: #1655b0; }
+.updates-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
+.check-label { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; overflow-wrap: anywhere; }
+.check-label input { flex: 0 0 auto; width: 20px; height: 20px; margin: 0; accent-color: #1655b0; }
+.check-label:has(input:disabled) { cursor: default; }
+.update-card h2 { margin-top: 12px; font-size: 1.0625rem; line-height: 1.4; }
+.ack-progress, .no-ack { margin-top: 18px; }
+.ack-progress p, .no-ack { color: #425169; font-size: 0.9375rem; }
+.ack-progress progress { display: block; width: 100%; height: 10px; margin-top: 8px; border: none; border-radius: 8px; overflow: hidden; background: #dce4ee; accent-color: #1655b0; }
+.ack-progress progress::-webkit-progress-bar { background: #dce4ee; border-radius: 8px; }
+.ack-progress progress::-webkit-progress-value { background: #1655b0; border-radius: 8px; }
+.ack-progress progress::-moz-progress-bar { background: #1655b0; border-radius: 8px; }
+.sent-to { margin-top: 24px; color: #425169; }
+.manager-tracking > .ack-progress { margin-top: 28px; }
+.tracking-list { margin-top: 28px; }
+.store-group { margin-top: 18px; }
+.store-group h3 { font-size: 1rem; color: #425169; }
+.people-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.people-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 12px 0; border-bottom: 1px solid #d4dde8; overflow-wrap: anywhere; }
+.people-list time { color: #526174; font-size: 0.875rem; }
+.publish-success, .everyone-acknowledged { margin-bottom: 24px; padding: 16px; border: 1px solid #90b8a1; border-radius: 8px; background: #e3f3e9; color: #216142; }
+.everyone-acknowledged { margin: 28px 0 0; }
+.post-form { display: grid; gap: 24px; margin-top: 24px; }
+.field-heading { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.field-heading label, legend { font-weight: 650; }
+.field-heading span, .field-help { color: #526174; font-size: 0.875rem; }
+.form-field > input, .form-field > textarea { display: block; width: 100%; min-width: 0; padding: 12px; border: 1px solid #8997a9; border-radius: 8px; background: #fff; color: #182536; }
+.form-field > input { min-height: 48px; }
+.form-field > textarea { resize: vertical; }
+.form-field > [aria-invalid="true"] { border-color: #a52720; }
+.field-error { margin-top: 8px; color: #a52720; font-size: 0.9375rem; }
+.post-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.post-form legend { margin-bottom: 8px; padding: 0; }
+.category-buttons { display: flex; gap: 8px; }
+.category-buttons button, .all-stores { min-height: 44px; padding: 8px 14px; border: 1px solid #8997a9; border-radius: 8px; background: #fff; color: #1655b0; font-weight: 600; }
+.category-buttons button { flex: 1; min-width: 0; }
+.category-buttons button[aria-pressed="true"] { color: #fff; background: #1655b0; border-color: #1655b0; }
+.all-stores { margin: 2px 0 8px; }
+.ack-field .field-help { margin-top: 4px; }
+.publish-actions .field-help { margin-bottom: 12px; }
 
 @media (min-width: 600px) {
   .header-inner { padding-top: 20px; padding-bottom: 20px; }

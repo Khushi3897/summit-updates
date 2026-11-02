@@ -63,6 +63,29 @@ export function getManagerAnnouncements(
     manager.role === 'operations-manager' || announcement.audienceStoreIds.includes(manager.storeId)));
 }
 
+export function getManagerUpdate(
+  manager: Manager, id: string, announcements: readonly Announcement[],
+  acknowledgments: readonly Acknowledgment[],
+) {
+  const announcement = getManagerAnnouncements(manager, announcements).find(item => item.id === id);
+  if (!announcement) return null;
+  return {
+    announcement,
+    summary: getAckSummary(announcement, acknowledgments, USERS, manager),
+    groupByStore: manager.role === 'operations-manager' && announcement.audienceStoreIds.length > 1,
+  };
+}
+
+export function getPostingOptions(manager: Manager) {
+  const audienceLocked = manager.role === 'store-manager';
+  const stores = STORES.filter(store => !audienceLocked || store.id === manager.storeId);
+  const initialInput: AnnouncementInput = {
+    title: '', body: '', category: 'general', requiresAck: defaultRequiresAck('general'),
+    audienceStoreIds: audienceLocked ? stores.map(store => store.id) : [],
+  };
+  return { stores, audienceLocked, initialInput };
+}
+
 export function acknowledge(
   state: AppState, announcementId: string, userId: string, now: Date,
 ): AcknowledgeResult {

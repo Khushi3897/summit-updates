@@ -5,6 +5,7 @@ import { useAppState } from './lib/useAppState';
 import { useHashRoute } from './lib/useHashRoute';
 import { Feed } from './screens/Feed';
 import { UpdateDetail } from './screens/UpdateDetail';
+import { ManagerExperience } from './screens/ManagerExperience';
 
 export default function App() {
   const state = useAppState();
@@ -20,7 +21,7 @@ export default function App() {
     <>
       <Header currentUserId={state.currentUserId} />
       <main ref={main} tabIndex={-1}>
-        {user.role !== 'employee' ? <h1>Manager screens come next</h1> :
+        {user.role !== 'employee' ? <ManagerExperience key={user.id} user={user} state={state} route={route} /> :
           route.screen === 'update' ? <UpdateDetail key={`${user.id}/${route.id}`} id={route.id} user={user} state={state} /> :
             <Feed user={user} state={state} />}
       </main>

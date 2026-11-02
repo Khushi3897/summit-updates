@@ -13,6 +13,14 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   safety: 'Safety', policy: 'Policy', general: 'General',
 };
 
+export function storeName(id: string): string {
+  return STORES.find(store => store.id === id)?.name ?? id;
+}
+
+export function audienceNames(storeIds: readonly string[]): string {
+  return storeIds.map(storeName).join(', ');
+}
+
 export function relativeDate(iso: string, now: Date): string {
   const seconds = Math.max(0, Math.floor((now.getTime() - Date.parse(iso)) / 1000));
   if (seconds < 60) return 'Just now';

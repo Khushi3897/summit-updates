@@ -4,6 +4,7 @@ import {
   acknowledge, createAnnouncement, defaultRequiresAck, getAckSummary, getEmployeeFeed,
   getConfirmationStatus, getEmployeeUpdate,
   getFollowUpAnnouncements, getManagerAnnouncements, getRecipients, hasAcknowledged,
+  getManagerUpdate, getPostingOptions,
   validateAnnouncementInput,
 } from './rules';
 import { buildSeed } from './seed';
@@ -20,6 +21,35 @@ const input: AnnouncementInput = {
 };
 
 describe('rules', () => {
+  it('tracking enforces manager access, scoped counts, and grouping without creating acknowledgments', () => {
+    const state = buildSeed(now);
+    const before = structuredClone(state);
+    expect(getManagerUpdate(rachel, 'ladder-safety', state.announcements, state.acknowledgments)).toBeNull();
+    expect(getManagerUpdate(michael, 'missing', state.announcements, state.acknowledgments)).toBeNull();
+    const rachelPolicy = getManagerUpdate(rachel, 'return-policy', state.announcements, state.acknowledgments)!;
+    expect(rachelPolicy).toMatchObject({ groupByStore: false,
+      summary: { acknowledgedCount: 6, pendingCount: 2, total: 8 } });
+    const michaelPolicy = getManagerUpdate(michael, 'return-policy', state.announcements, state.acknowledgments)!;
+    expect(michaelPolicy).toMatchObject({ groupByStore: true,
+      summary: { acknowledgedCount: 24, pendingCount: 11, total: 35 } });
+    expect(michaelPolicy.summary.byStore.map(store => [store.acknowledged.length, store.pending.length]))
+      .toEqual([[6, 2], [5, 2], [4, 3], [4, 2], [5, 2]]);
+    expect(getManagerUpdate(michael, 'closing-safety', state.announcements, state.acknowledgments)?.groupByStore).toBe(false);
+    expect(state).toEqual(before);
+  });
+
+  it('posting options lock Rachel to Bellevue and let Michael choose any store', () => {
+    const rachelOptions = getPostingOptions(rachel);
+    expect(rachelOptions.audienceLocked).toBe(true);
+    expect(rachelOptions.stores.map(store => store.id)).toEqual(['bellevue']);
+    expect(rachelOptions.initialInput).toEqual({ title: '', body: '', category: 'general',
+      requiresAck: false, audienceStoreIds: ['bellevue'] });
+    const michaelOptions = getPostingOptions(michael);
+    expect(michaelOptions.audienceLocked).toBe(false);
+    expect(michaelOptions.stores).toEqual(STORES);
+    expect(michaelOptions.initialInput.audienceStoreIds).toEqual([]);
+  });
+
   it('detail access uses fixed recipients and reading details never acknowledges', () => {
     const state = buildSeed(now);
     const before = structuredClone(state);
