@@ -19,7 +19,7 @@ export function Feed({ user, state }: { user: Employee; state: AppState }) {
           <h1 id="needs-confirmation">Needs your confirmation</h1>
           <ul className="update-list">
             {feed.needsConfirmation.map(announcement => <UpdateCard key={announcement.id}
-              announcement={announcement} userId={user.id} acknowledgments={state.acknowledgments} />)}
+              headingLevel={2} announcement={announcement} userId={user.id} acknowledgments={state.acknowledgments} />)}
           </ul>
         </section>
       ) : (

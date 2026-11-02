@@ -11,7 +11,7 @@ export function Header({ currentUserId }: { currentUserId: string }) {
         <div className="brand-row">
           <a className="brand" href="#/">Summit Updates</a>
           <details className="demo-menu" ref={menu}>
-            <summary aria-label="Demo options">⋯</summary>
+            <summary aria-label="Demo options"><span aria-hidden="true">⋯</span></summary>
             <div className="menu-panel">
               <button type="button" onClick={() => {
                 resetDemo();

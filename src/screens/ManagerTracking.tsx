@@ -27,7 +27,7 @@ export function ManagerTracking({ id, user, state, published }: {
   const { announcement, summary, groupByStore } = update;
   return (
     <article className="update-detail manager-tracking">
-      <a className="back-link" href="#/">← Back to updates</a>
+      <a className="back-link" href="#/"><span aria-hidden="true">←</span> Back to updates</a>
       {published && <p className="publish-success" role="status">
         Published to {audienceNames(announcement.audienceStoreIds)}. {announcement.recipientIds.length} employees can see it.
       </p>}

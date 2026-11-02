@@ -40,7 +40,7 @@ export function UpdateDetail({ id, user, state }: { id: string; user: Employee; 
 
   return (
     <article className={`update-detail${confirmation.kind !== 'routine' ? ' has-confirmation' : ''}`}>
-      <a className="back-link" href="#/">← Back to feed</a>
+      <a className="back-link" href="#/"><span aria-hidden="true">←</span> Back to feed</a>
       <div className="detail-content">
         <span className="category">{CATEGORY_LABELS[announcement.category]}</span>
         <h1>{announcement.title}</h1>
