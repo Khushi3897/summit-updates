@@ -1,5 +1,7 @@
 # Summit Updates
 
+[Open the live demo](https://Khushi3897.github.io/summit-updates/)
+
 Summit Updates helps retail managers follow up on important announcements without turning every update into another task for employees. Built for **Scenario 2: Important Employee Updates**, it is a phone-friendly prototype for Summit Retail Group's five stores and approximately 200 employees, many of whom work on the sales floor and rarely check company email.
 
 The prototype completes one workflow: **a manager publishes to selected stores, an employee explicitly confirms reading an important update, and the manager sees the updated acknowledgment status.**
