@@ -16,6 +16,14 @@ For selected important updates, managers can also opt into **one quick check**, 
 
 Only tapping **Confirm I've read this** records acknowledgment. Answering a question correctly does not. Opening an announcement does not. This gives Rachel a concrete follow-up list without requiring Alex to confirm every routine message. A confirmation records a declaration of reading; it does not establish understanding or prove that an unconfirmed announcement went unread.
 
+## Time spent
+
+The original build took about 3 hours. I split that time across three areas:
+
+- **Product decisions:** defining audience targeting, manager permissions, and when acknowledgment should be required.
+- **Implementation:** using Codex to build the publishing, employee confirmation, and manager tracking flow in small steps.
+- **Review and validation:** reading diffs, checking changes against the requirements, and clicking through the app, including at phone width.
+
 ## Run it
 
 Use Node.js 24.15.0 or a newer 24.x version.
@@ -79,10 +87,18 @@ Data is stored only in this browser using localStorage, so announcements and con
 - Will employees use personal phones or shared store devices? This would shape identity, session handling, and access during a shift.
 - What should a manager do when confirmation is still missing after several days? I would clarify the follow-up process before adding reminders.
 - Does a policy change need proof of reading, a compliance audit trail, or a way to check understanding? These are different needs, and this prototype addresses explicit confirmation of reading with an optional check of one key detail.
+- Would a one-question check on safety updates help your team pay attention, or would they feel quizzed? Should it ever be required?
 
 ## How I used Codex and checked its work
 
 I used Codex as an implementation and review assistant, with the product constraints and acceptance criteria captured in `AGENTS.md`. The implementation keeps business rules in `src/lib`, separate from the React screens, so audience selection, confirmation behavior, validation, and manager counts can be checked independently of the interface. Codex also helped refine this README and check the walkthrough against the source code.
+
+**Things I caught myself while reviewing Codex’s work:**
+
+- Codex hand-wrote React type stubs instead of installing the real type packages because my dependency list had missed them. I caught this in its report and had it replace the stubs with the real packages.
+- During the employee screens, Codex changed the rules file even though I had asked it to reuse the existing rules. I read the diff and confirmed the changes were limited to helpers and a small refactor that preserved behavior.
+- From my own experience, I know employees often skim updates. I approved a smaller demo roster and an optional quick check to reinforce one key detail. Codex also narrowed “Viewing as” to four people, which wasn’t my intent, so I had it restore all 20 employees as selectable users.
+- I clicked through each step myself, including at phone width, to check the experience alongside the automated test results.
 
 Verification focused on the ways the workflow could mislead a manager or frustrate an employee:
 
