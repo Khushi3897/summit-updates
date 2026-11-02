@@ -16,6 +16,26 @@ export function hasAcknowledged(
   return acknowledgments.some(ack => ack.announcementId === announcementId && ack.userId === userId);
 }
 
+export function getConfirmationStatus(
+  announcement: Announcement, userId: string, acknowledgments: readonly Acknowledgment[],
+): { kind: 'routine' } | { kind: 'pending' } | { kind: 'confirmed'; ackedAt: string } {
+  if (!announcement.requiresAck) return { kind: 'routine' };
+  const acknowledgment = acknowledgments.find(ack =>
+    ack.announcementId === announcement.id && ack.userId === userId);
+  return acknowledgment ? { kind: 'confirmed', ackedAt: acknowledgment.ackedAt } : { kind: 'pending' };
+}
+
+export function getEmployeeUpdate(
+  user: Employee, announcementId: string, announcements: readonly Announcement[],
+  acknowledgments: readonly Acknowledgment[],
+) {
+  const announcement = announcements.find(item => item.id === announcementId);
+  if (!announcement || !getRecipients(announcement, USERS).some(recipient => recipient.id === user.id)) {
+    return null;
+  }
+  return { announcement, confirmation: getConfirmationStatus(announcement, user.id, acknowledgments) };
+}
+
 function newestFirst(announcements: readonly Announcement[]): Announcement[] {
   return [...announcements].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
 }
@@ -27,7 +47,7 @@ export function getEmployeeFeed(
   const recent: Announcement[] = [];
   for (const announcement of newestFirst(announcements)) {
     if (!announcement.recipientIds.includes(user.id)) continue;
-    if (announcement.requiresAck && !hasAcknowledged(announcement.id, user.id, acknowledgments)) {
+    if (getConfirmationStatus(announcement, user.id, acknowledgments).kind === 'pending') {
       needsConfirmation.push(announcement);
     } else {
       recent.push(announcement);

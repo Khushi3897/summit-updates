@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { EMPLOYEES, MANAGERS, STORES, USERS } from './constants';
 import {
   acknowledge, createAnnouncement, defaultRequiresAck, getAckSummary, getEmployeeFeed,
+  getConfirmationStatus, getEmployeeUpdate,
   getFollowUpAnnouncements, getManagerAnnouncements, getRecipients, hasAcknowledged,
   validateAnnouncementInput,
 } from './rules';
@@ -19,6 +20,33 @@ const input: AnnouncementInput = {
 };
 
 describe('rules', () => {
+  it('detail access uses fixed recipients and reading details never acknowledges', () => {
+    const state = buildSeed(now);
+    const before = structuredClone(state);
+    const detail = getEmployeeUpdate(alex, 'closing-safety', state.announcements, state.acknowledgments);
+    expect(detail?.confirmation).toEqual({ kind: 'pending' });
+    expect(getEmployeeUpdate(maya, 'closing-safety', state.announcements, state.acknowledgments)).toBeNull();
+    expect(getEmployeeUpdate(alex, 'missing', state.announcements, state.acknowledgments)).toBeNull();
+    const reassigned = { ...alex, storeId: 'tacoma' };
+    expect(getEmployeeUpdate(reassigned, 'closing-safety', state.announcements, state.acknowledgments))
+      .toEqual(detail);
+    expect(state).toEqual(before);
+  });
+
+  it('detail and card confirmation status agree before and after an explicit confirmation', () => {
+    const state = buildSeed(now);
+    const routine = state.announcements.find(item => item.id === 'holiday-hours')!;
+    expect(getConfirmationStatus(routine, alex.id, state.acknowledgments)).toEqual({ kind: 'routine' });
+    const policy = getEmployeeUpdate(alex, 'return-policy', state.announcements, state.acknowledgments)!;
+    expect(policy.confirmation.kind).toBe('confirmed');
+    const result = acknowledge(state, 'closing-safety', alex.id, now);
+    if (!result.ok) throw new Error(result.error);
+    const detail = getEmployeeUpdate(alex, 'closing-safety', result.state.announcements, result.state.acknowledgments)!;
+    expect(detail.confirmation).toEqual({ kind: 'confirmed', ackedAt: now.toISOString() });
+    expect(getConfirmationStatus(detail.announcement, alex.id, result.state.acknowledgments))
+      .toEqual(detail.confirmation);
+  });
+
   it('an employee only sees announcements whose recipients include them', () => {
     const state = buildSeed(now);
     for (const employee of EMPLOYEES) {
