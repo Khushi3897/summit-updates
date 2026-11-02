@@ -1,0 +1,12 @@
+:root {
+  font-family: system-ui, sans-serif;
+  font-size: 16px;
+  color: #172033;
+  background: #fff;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+h1 { margin: 0; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid #145ac2; outline-offset: 3px; }

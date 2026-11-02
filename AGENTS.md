@@ -7,7 +7,7 @@ You are the engineer. I am the product manager. Follow this file exactly.
 2. If something is unclear, choose the simplest option consistent with this file. Do not stop to ask me more than once; list your choices under ASSUMPTIONS in your reply.
 3. All business rules live in src/lib as plain functions that never touch the screen or the browser. Screens only call these functions. Never copy a rule into a component.
 4. After every step, run: npm test and npm run build. Paste the real results. If something fails, fix it. Never say "should work" without running it.
-5. Allowed dependencies: react, react-dom, vite, typescript, @vitejs/plugin-react, vitest. In the QA step you may also add jsdom and @testing-library/react. Nothing else (no router, no UI kit, no CSS framework, no state library).
+5. Allowed dependencies: react, react-dom, vite, typescript, @vitejs/plugin-react, vitest, @types/react, @types/react-dom. In the QA step you may also add jsdom and @testing-library/react. Nothing else (no router, no UI kit, no CSS framework, no state library).
 6. End every reply with four headings: CHANGED (files), RAN (commands + results), ASSUMPTIONS, NOT DONE.
 
 ## Product
