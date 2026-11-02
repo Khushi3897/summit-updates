@@ -29,10 +29,11 @@ export function UpdateDetail({ id, user, state }: { id: string; user: Employee; 
     savingRef.current = true;
     setSaving(true);
     setError('');
-    // Yield to render the disabled saving state before the synchronous store write.
+    // Persist the explicit action now so navigating away cannot cancel it.
+    const result = confirm(id);
+    if (!result.ok) setError(result.error);
+    // The timer controls only the brief disabled saving indicator.
     saveTimer.current = setTimeout(() => {
-      const result = confirm(id);
-      if (!result.ok) setError(result.error);
       savingRef.current = false;
       setSaving(false);
     }, 0);
@@ -54,7 +55,7 @@ export function UpdateDetail({ id, user, state }: { id: string; user: Employee; 
         <div className="confirmation-bar">
           <div className="confirmation-inner">
             {error && <p className="save-error" role="alert">{error}</p>}
-            {confirmation.kind === 'confirmed' ? (
+            {confirmation.kind === 'confirmed' && !saving ? (
               <p className="confirmed-message" role="status">
                 Confirmed on <time dateTime={confirmation.ackedAt}>{dateAndTime(confirmation.ackedAt)}</time>
               </p>
