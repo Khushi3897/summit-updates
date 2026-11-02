@@ -63,6 +63,13 @@ describe('QA 5–6: all manager counts, employee identities, and store groups', 
         (manager.role === 'operations-manager' || employee.storeId === manager.storeId));
       const summary = getAckSummary(announcement, state.acknowledgments, USERS, manager);
       expect(summary.total).toBe(expected.length);
+      const acknowledged = expected.filter(employee => state.acknowledgments.some(ack =>
+        ack.announcementId === announcement.id && ack.userId === employee.id));
+      const pending = expected.filter(employee => !acknowledged.includes(employee));
+      expect(summary.acknowledged.map(item => item.user.id).sort())
+        .toEqual(acknowledged.map(employee => employee.id).sort());
+      expect(summary.pending.map(employee => employee.id).sort())
+        .toEqual(pending.map(employee => employee.id).sort());
       for (const group of [summary, ...summary.byStore]) {
         const people = [...group.acknowledged.map(item => item.user), ...group.pending];
         expect(group.acknowledgedCount).toBe(group.acknowledged.length);

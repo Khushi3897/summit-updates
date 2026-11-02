@@ -27,7 +27,7 @@ Managers (they are NOT recipients of announcements):
 - Michael Torres, Operations Manager. Can post to any stores or all 5. Sees every announcement and everyone's status.
 - Rachel Kim, Store Manager of Summit Bellevue. Can post ONLY to Bellevue. Sees announcements whose audience includes Bellevue (including ones Michael posted), and in those sees ONLY Bellevue employees' status.
 Employees: 20 total with realistic, varied names: four per store. Bellevue includes Alex Rivera; Tacoma includes Maya Chen. Each employee belongs to exactly one store.
-Users and stores are fixed constants (not saved in the browser). There is no login: a "Viewing as" switcher in the header offers only Michael, Rachel, Alex, and Maya to keep the demo focused. Other employees remain in recipient counts and lists.
+Users and stores are fixed constants (not saved in the browser). There is no login: a "Viewing as" switcher in the header offers Michael Torres and Rachel Kim first, then all 20 employees grouped by store name, four per store. All employees remain in recipient counts and lists.
 
 ## Rules
 R1 An announcement's audience is fixed when it is published: save recipientIds (the employees of the chosen stores at that moment).

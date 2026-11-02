@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
-import { EMPLOYEES, MANAGERS, STORAGE_KEY } from './lib/constants';
+import { EMPLOYEES, MANAGERS, STORES, STORAGE_KEY, USERS } from './lib/constants';
 import { buildSeed } from './lib/seed';
 import { createStore } from './lib/store';
 
@@ -67,11 +67,35 @@ afterEach(() => {
 });
 
 describe('QA behavior', () => {
-  it('shows only the four demo identities while retaining four employees per store', () => {
+  it('lists two managers first, followed by all 20 employees in five store groups of four', () => {
     render(<App />);
-    expect(screen.getAllByRole('option').map(option => option.textContent))
-      .toEqual(['Michael Torres', 'Rachel Kim', 'Alex Rivera', 'Maya Chen']);
-    expect(EMPLOYEES).toHaveLength(20);
+    const select = screen.getByRole('combobox', { name: 'Viewing as' });
+    const options = within(select).getAllByRole('option') as HTMLOptionElement[];
+    expect(options).toHaveLength(22);
+    expect(options.slice(0, 2).map(option => option.textContent)).toEqual(['Michael Torres', 'Rachel Kim']);
+    expect(options.map(option => option.value)).toEqual(USERS.map(user => user.id));
+    const groups = within(select).getAllByRole('group');
+    expect(groups.map(group => group.getAttribute('label'))).toEqual(['Managers', ...STORES.map(store => store.name)]);
+    expect(within(groups[0]).getAllByRole('option')).toHaveLength(2);
+    for (const store of STORES) {
+      const employees = within(within(select).getByRole('group', { name: store.name })).getAllByRole('option') as HTMLOptionElement[];
+      expect(employees).toHaveLength(4);
+      expect(employees.map(option => option.value)).toEqual(EMPLOYEES.filter(employee => employee.storeId === store.id).map(employee => employee.id));
+    }
+  });
+
+  it('selects and restores every manager and employee after a refresh', () => {
+    render(<App />);
+    for (const user of USERS) {
+      viewer(user.id);
+      expect(store.getState().currentUserId).toBe(user.id);
+      const expected = structuredClone(store.getState());
+      cleanup();
+      reloadStore();
+      render(<App />);
+      expect(store.getState()).toEqual(expected);
+      expect((screen.getByRole('combobox', { name: 'Viewing as' }) as HTMLSelectElement).value).toBe(user.id);
+    }
   });
 
   it('a quick-check answer never confirms by itself, and changing a passed answer removes confirmation eligibility', () => {

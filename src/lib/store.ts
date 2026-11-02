@@ -1,4 +1,4 @@
-import { DEMO_USER_IDS, STORAGE_KEY, USERS } from './constants';
+import { STORAGE_KEY, USERS } from './constants';
 import { acknowledge, createAnnouncement, validateAnnouncementInput } from './rules';
 import { buildSeed } from './seed';
 import type { Announcement, AnnouncementInput, AppState } from './types';
@@ -30,7 +30,7 @@ function isAnnouncement(value: unknown): value is Announcement {
 }
 function isSavedState(value: unknown): value is AppState {
   if (!isRecord(value) || value.version !== 1 || typeof value.currentUserId !== 'string' ||
-      !DEMO_USER_IDS.includes(value.currentUserId) ||
+      !USERS.some(user => user.id === value.currentUserId) ||
       !Array.isArray(value.announcements) || !value.announcements.every(isAnnouncement) ||
       !Array.isArray(value.acknowledgments)) return false;
   const announcements: Announcement[] = value.announcements;
@@ -88,7 +88,7 @@ export function createStore(options: { storage?: StorageAdapter; now?: () => Dat
       return () => { listeners.delete(listener); };
     },
     switchUser(userId: string): boolean {
-      if (!DEMO_USER_IDS.includes(userId)) return false;
+      if (!USERS.some(user => user.id === userId)) return false;
       if (state.currentUserId !== userId) commit({ ...state, currentUserId: userId });
       return true;
     },

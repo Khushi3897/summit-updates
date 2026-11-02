@@ -37,6 +37,5 @@ export const EMPLOYEES: readonly Employee[] = [
 ];
 
 export const USERS: readonly User[] = [...MANAGERS, ...EMPLOYEES];
-export const DEMO_USER_IDS: readonly string[] = ['michael-torres', 'rachel-kim', 'alex-rivera', 'maya-chen'];
 export const DEFAULT_USER_ID = 'rachel-kim';
 export const STORAGE_KEY = 'summit-updates:v1';

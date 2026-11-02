@@ -128,9 +128,9 @@ describe('optional quick checks', () => {
       .toHaveLength(1);
   });
 
-  it('recovers from old rosters, unavailable demo viewers, and malformed saved questions', () => {
+  it('recovers from unknown employees or viewers and malformed saved questions', () => {
     for (const mutate of [
-      (state: ReturnType<typeof buildSeed>) => { state.currentUserId = 'priya-shah'; },
+      (state: ReturnType<typeof buildSeed>) => { state.currentUserId = 'unknown-viewer'; },
       (state: ReturnType<typeof buildSeed>) => { state.announcements[0].recipientIds.push('ethan-nguyen'); },
       (state: ReturnType<typeof buildSeed>) => { state.announcements[0].quickCheck = null as unknown as QuickCheck; },
       (state: ReturnType<typeof buildSeed>) => { state.announcements[0].quickCheck!.correctOptionIndex = 3 as 1; },
@@ -143,6 +143,6 @@ describe('optional quick checks', () => {
       };
       expect(createStore({ storage, now: () => now }).getState()).toEqual(buildSeed(now));
     }
-    expect(createStore({ now: () => now }).switchUser('priya-shah')).toBe(false);
+    expect(createStore({ now: () => now }).switchUser('unknown-viewer')).toBe(false);
   });
 });

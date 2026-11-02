@@ -45,7 +45,7 @@ npm run build
 
 I recorded a short demo covering the problem, the working flow, my assumptions, and what I would explore next. To reproduce the main workflow:
 
-1. Open the header's three-dot menu and choose **Reset demo data**. This restores eight sample announcements and selects **Rachel Kim**, Bellevue's store manager.
+1. Open the header's three-dot menu and choose **Reset demo data**. This restores eight sample announcements and selects **Rachel Kim**, Bellevue's store manager. **Viewing as** lists Michael Torres and Rachel Kim first, then all 20 employees grouped by store name, four per store. The seeded closing safety update starts at **2 of 4 acknowledged**, with Alex Rivera and Sofia Martinez still pending; Alex has exactly one item needing confirmation and Maya has none.
 2. As Rachel, open **Post an update**. Enter the title **Stockroom exit check** and the message **Before closing, check that the stockroom exit is clear. Report any obstruction to the manager on duty.** Select **Safety**. **Requires acknowledgment** turns on, and Rachel's audience is fixed to Summit Bellevue. Turn on **Add a quick check**. Use the question **What should you do if the exit is blocked?**, answer choice 1 **Tell the manager on duty** (the correct answer), answer choice 2 **Leave it for the next shift**, and the retry explanation **Report any obstruction to the manager on duty.** Select **Publish update**; tracking shows **0 of 4 acknowledged**.
 3. Switch **Viewing as** to **Alex Rivera**. Open **Stockroom exit check** under **Needs your confirmation**. Opening it leaves confirmation pending. Try the incorrect answer and select **Check answer** to see the explanation, then choose the correct answer and check it. Confirmation is still pending until you tap **Confirm I've read this** to see the confirmation timestamp; return to the feed to see the announcement in **Recent updates**.
 4. Switch back to **Rachel Kim** and open that announcement. Tracking now shows **1 of 4 acknowledged**, with Alex under **Acknowledged** and three employees under **Still pending**. **Needs follow-up** includes this update because confirmations remain outstanding.
@@ -58,7 +58,7 @@ For the wider manager view, switch to **Michael Torres**. He can publish to any 
 - **Store membership:** each employee belongs to exactly one store, making targeting predictable for this first version.
 - **Manager scope:** Michael can publish and track across all five stores; Rachel can publish only to Bellevue and sees only Bellevue employees' status, including on company-wide updates. Managers are not announcement recipients.
 - **Stable records:** recipients are fixed at publication, and published announcements cannot be edited or deleted. This preserves the message and audience associated with each confirmation.
-- **Demo identities:** the sample models two managers and 20 employees across five stores, four per store, representing a slice of the approximately 200-person organization. **Viewing as** replaces login and offers only Michael, Rachel, Alex, and Maya to make the demo easy to navigate. The other employees remain in tracking lists.
+- **Demo identities:** the sample models two managers and 20 employees across five stores, four per store, representing a slice of the approximately 200-person organization. **Viewing as** replaces login and offers both managers first, then all 20 employees grouped by store name. The selected person persists after refresh, and all employees remain in tracking lists.
 - **Importance:** category supplies a sensible acknowledgment default, while the manager makes the final decision for each announcement.
 
 ## What I left out on purpose
@@ -95,7 +95,7 @@ Verification focused on the ways the workflow could mislead a manager or frustra
 - Blank or overlong content must be rejected, and malformed saved data must recover without crashing.
 - Publishing, confirming, switching identities, and reloading must preserve the expected state.
 
-The current validation run passed **102 tests across six test files** with `npm test`. `npm run build` also passed the strict TypeScript check and production build. The UI tests use jsdom; they do not establish mobile layout or real-browser usability on their own.
+The current validation run passed **104 tests across six test files** with `npm test`. `npm run build` also passed the strict TypeScript check and production build. Tests cover all 22 switcher identities and their persistence after refresh, four employees per store with one store per employee, and counts matching lists for every seeded announcement under both managers. Separate browser checks at 390px and 360px confirmed all 22 options, four employees in each store group, a 44px-high select, and no horizontal overflow. The UI tests use jsdom; they do not establish mobile layout or real-browser usability on their own.
 
 ## What I would validate next
 

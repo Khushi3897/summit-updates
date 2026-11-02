@@ -10,6 +10,22 @@ const alex = EMPLOYEES.find(user => user.id === 'alex-rivera')!;
 const maya = EMPLOYEES.find(user => user.id === 'maya-chen')!;
 
 describe('seed', () => {
+  it('assigns every employee to exactly one of the five stores, four per store', () => {
+    const grouped = STORES.flatMap(store => EMPLOYEES.filter(employee => employee.storeId === store.id));
+    expect(EMPLOYEES).toHaveLength(20);
+    expect(new Set(EMPLOYEES.map(employee => employee.id)).size).toBe(20);
+    expect(grouped).toHaveLength(20);
+    for (const employee of EMPLOYEES) {
+      expect(STORES.filter(store => store.id === employee.storeId)).toHaveLength(1);
+      expect(grouped.filter(member => member.id === employee.id)).toHaveLength(1);
+    }
+    for (const store of STORES) {
+      expect(EMPLOYEES.filter(employee => employee.storeId === store.id)).toHaveLength(4);
+    }
+    expect(alex.storeId).toBe('bellevue');
+    expect(maya.storeId).toBe('tacoma');
+  });
+
   it('seed has 8 announcements, 20 employees, 5 stores', () => {
     const state = buildSeed(now);
     expect(state.announcements).toHaveLength(8);
